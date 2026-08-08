@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Steam Stats — сколько лет ты отдал Steam</title>
+<meta name="description" content="Кинь ссылку на профиль Steam — посчитаем часы, переведём их в дни, недели и деньги.">
+<meta property="og:title" content="Сколько лет ты уже отдал Steam">
+<meta property="og:description" content="Часы, дни, деньги и игры, которые ты так и не запустил.">
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<div class="shell">
+
+  <div class="topbar">
+    <div style="display:flex;align-items:baseline;gap:10px">
+      <span class="brand">STEAM STATS</span>
+      <span class="kicker">Playtime audit</span>
+    </div>
+    <span class="muted" style="font-size:12px">Не связан с Valve</span>
+  </div>
+
+  <!-- ── форма ── -->
+  <div id="screen-form">
+    <div class="hero">
+      <div class="hero-left">
+        <div class="kicker" style="margin-bottom:16px">Отчёт №1 о прожитой жизни</div>
+        <h1>Сколько лет ты уже отдал Steam</h1>
+        <p style="font-size:16px;max-width:46ch;margin:0 0 30px;color:color-mix(in srgb,var(--color-text) 72%,transparent);text-wrap:pretty">
+          Кинь ссылку на профиль — посчитаем часы, переведём их в дни, недели и деньги.
+          И покажем, сколько лежит в играх, которые ты ни разу не запустил.
+        </p>
+
+        <form class="blueprint lookup" id="form">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <label class="label" for="q">Ссылка на профиль или SteamID</label>
+          <div class="lookup-row">
+            <input class="input" id="q" name="q" style="min-height:44px;font-size:15px"
+                   placeholder="steamcommunity.com/id/..." autocomplete="off" required>
+            <button class="btn btn-primary blueprint" style="min-height:44px;padding-inline:24px;white-space:nowrap;font-size:15px">
+              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              Посчитать
+            </button>
+          </div>
+          <div class="muted" style="font-size:12px">Профиль должен быть открыт.</div>
+        </form>
+
+        <div style="display:flex;gap:28px;margin-top:34px">
+          <div>
+            <div class="h-num" style="font-size:26px;line-height:1">{{ "{:,}".format(stats.profiles).replace(",", " ") }}</div>
+            <div class="label">профилей посчитано</div>
+          </div>
+          <div>
+            <div class="h-num" style="font-size:26px;line-height:1">{{ "{:,}".format(stats.years).replace(",", " ") }} лет</div>
+            <div class="label">суммарно прожито в играх</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <div class="label" style="color:rgba(238,244,250,.6)">Sample output / превью отчёта</div>
+        <div>
+          <div class="h-num" style="font-size:96px;line-height:.85;letter-spacing:-.02em">8 214</div>
+          <div style="font-size:13px;letter-spacing:.16em;text-transform:uppercase;opacity:.65;margin-top:6px">часов · 342 дня · 48,9 недель</div>
+          <div style="height:1px;background:rgba(242,242,243,.22);margin:26px 0"></div>
+          <div class="stat-grid">
+            <div><div class="h-num">213 480 ₽</div><div class="label" style="color:rgba(238,244,250,.6)">стоимость библиотеки</div></div>
+            <div><div class="h-num">26 ₽/ч</div><div class="label" style="color:rgba(238,244,250,.6)">средняя цена часа</div></div>
+            <div><div class="h-num">187</div><div class="label" style="color:rgba(238,244,250,.6)">игр с нулём часов</div></div>
+            <div><div class="h-num">74 320 ₽</div><div class="label" style="color:rgba(238,244,250,.6)">лежит в незапущенных</div></div>
+          </div>
+        </div>
+        <div style="font-size:12px;opacity:.55;line-height:1.5">Результат живёт по постоянному адресу<br>{{ host }}/u/76561198…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── загрузка ── -->
+  <div id="screen-loading" class="hidden">
+    <div class="panel">
+      <div class="kicker">Собираем библиотеку</div>
+      <div>
+        <h2 style="font-size:34px;margin:0 0 6px" id="load-name">Профиль</h2>
+        <div class="muted" style="font-size:13px" id="load-sub">считаем часы и цены</div>
+      </div>
+      <div class="blueprint progress">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <span></span>
+      </div>
+      <div class="steps" id="steps">
+        <div data-state="wait"><span>Профиль и дата регистрации</span><span>ожидает</span></div>
+        <div data-state="wait"><span>Список игр и наигранное время</span><span>ожидает</span></div>
+        <div data-state="wait"><span>Цены магазина, 6 регионов</span><span>ожидает</span></div>
+        <div data-state="wait"><span>Считаем рубль за час</span><span>ожидает</span></div>
+        <div data-state="wait"><span>Рисуем карточку для чата</span><span>ожидает</span></div>
+      </div>
+      <div class="muted" style="font-size:12px;border-top:1px solid var(--color-divider);padding-top:14px">
+        Обычно занимает 10–20 секунд. Можно закрыть вкладку — отчёт останется по постоянной ссылке.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ошибка ── -->
+  <div id="screen-error" class="hidden">
+    <div class="panel">
+      <div class="kicker" id="err-kicker">Ошибка</div>
+      <h2 style="font-size:36px;margin:0;max-width:18ch;line-height:1.05" id="err-title">Что-то пошло не так</h2>
+      <p class="muted" style="margin:0;font-size:14.5px;text-wrap:pretty" id="err-text"></p>
+
+      <div class="blueprint hidden" id="err-steps" style="padding:16px 18px;display:flex;flex-direction:column;gap:9px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="label">Что сделать</div>
+        <div style="display:flex;gap:10px;font-size:13.5px"><span class="stepnum">01</span><span>Профиль → Редактировать → Настройки приватности</span></div>
+        <div style="display:flex;gap:10px;font-size:13.5px"><span class="stepnum">02</span><span>«Мои данные об игре» → Открытый</span></div>
+        <div style="display:flex;gap:10px;font-size:13.5px"><span class="stepnum">03</span><span>Вернись сюда и нажми «Повторить»</span></div>
+      </div>
+
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-primary blueprint" style="min-height:40px;padding-inline:20px" id="err-retry">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Повторить
+        </button>
+        <button class="btn btn-secondary" style="min-height:40px" id="err-back">Другой профиль</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const screens = ["form", "loading", "error"];
+const show = n => screens.forEach(s => $("#screen-" + s).classList.toggle("hidden", s !== n));
+
+const ERRORS = {
+  private: {
+    kicker: "Профиль закрыт",
+    title: "Steam не показывает нам твои часы",
+    text: "Хорошая новость: значит, никто и не узнает про те 3 часа в Cyberpunk. Плохая — посчитать тоже не выйдет, пока приватность закрыта.",
+    steps: true,
+  },
+  not_found: { kicker: "Профиль не найден", title: "Такого профиля нет", text: "Проверь ссылку. Подойдёт адрес вида steamcommunity.com/id/ник или steamcommunity.com/profiles/765611…" },
+  no_games:  { kicker: "Пусто", title: "В библиотеке нет игр", text: "Steam отдал профиль, но игр в нём не оказалось. Считать нечего." },
+  upstream:  { kicker: "Steam не отвечает", title: "Steam сейчас недоступен", text: "Это бывает во время обновлений. Попробуй через минуту." },
+};
+
+let lastQuery = "";
+
+async function lookup(q) {
+  lastQuery = q;
+  show("loading");
+  $("#load-name").textContent = q.split("/").filter(Boolean).pop() || "Профиль";
+  $("#load-sub").textContent = "считаем часы и цены";
+
+  // Шаги — индикатор ожидания, а не реальный прогресс: запрос один.
+  const steps = [...$("#steps").children];
+  steps.forEach(s => { s.dataset.state = "wait"; s.lastElementChild.textContent = "ожидает"; });
+  let i = 0;
+  const tick = setInterval(() => {
+    if (i >= steps.length) return;
+    steps[i].dataset.state = "done";
+    steps[i].lastElementChild.textContent = "готово";
+    i++;
+  }, 1400);
+
+  try {
+    const r = await fetch("/api/lookup?q=" + encodeURIComponent(q));
+    const data = await r.json();
+    clearInterval(tick);
+    if (!r.ok) return fail(data?.detail?.code || "upstream");
+    location.href = "/u/" + data.steamid64;
+  } catch (e) {
+    clearInterval(tick);
+    fail("upstream");
+  }
+}
+
+function fail(code) {
+  const e = ERRORS[code] || ERRORS.upstream;
+  $("#err-kicker").textContent = e.kicker;
+  $("#err-title").textContent = e.title;
+  $("#err-text").textContent = e.text;
+  $("#err-steps").classList.toggle("hidden", !e.steps);
+  show("error");
+}
+
+$("#form").addEventListener("submit", ev => {
+  ev.preventDefault();
+  const q = $("#q").value.trim();
+  if (q) lookup(q);
+});
+$("#err-retry").addEventListener("click", () => lookup(lastQuery));
+$("#err-back").addEventListener("click", () => { show("form"); $("#q").focus(); });
+</script>
+</body>
+</html>

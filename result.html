@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{% set t = d.time %}{% set m = d.money %}{% set b = d.blocked %}
+<title>{{ d.persona }} — {{ t.total_hours|ru }} часов в Steam</title>
+<meta name="description" content="{{ t.total_hours|ru }} часов = {{ t.days|ru }} {{ t.days|plural('день','дня','дней') }} жизни. Посчитай свои.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ host }}/u/{{ d.steamid64 }}">
+<meta property="og:title" content="{{ d.persona }} потратил {{ t.days|ru }} {{ t.days|plural('день','дня','дней') }} жизни в Steam">
+<meta property="og:description" content="{{ t.total_hours|ru }} часов{% if m.reliable and m.library_value %} и {{ m.library_value|ru }} ₽{% endif %}. Посчитай свои.">
+<meta property="og:image" content="{{ host }}/og/{{ d.steamid64 }}.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<div class="shell">
+
+  <div class="topbar">
+    <div style="display:flex;align-items:baseline;gap:12px">
+      <a href="/" class="brand" style="color:inherit;text-decoration:none">STEAM STATS</a>
+      <span class="muted hide-sm" style="font-size:12px;font-family:var(--font-mono)">/u/{{ d.steamid64 }}</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="btn btn-secondary" style="min-height:36px" id="copy">Копировать ссылку</button>
+      <a class="btn btn-primary blueprint" style="min-height:36px" href="/og/{{ d.steamid64 }}.jpg" download>
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Скачать картинку
+      </a>
+    </div>
+  </div>
+
+  <!-- ── герой ── -->
+  <div class="result-hero">
+    <div class="result-hero-top">
+      <div>
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px">
+          <div class="blueprint" style="width:52px;height:52px">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            {% if d.avatar %}<img class="avatar" src="{{ d.avatar }}" alt="" width="52" height="52" loading="lazy">{% endif %}
+          </div>
+          <div>
+            <div class="h-num" style="font-size:24px;line-height:1.1">{{ d.persona }}</div>
+            <div style="font-size:12px;opacity:.6">в Steam с {{ d.created_str }} · {{ d.account_days|ru }} {{ d.account_days|plural('день','дня','дней') }} назад</div>
+          </div>
+        </div>
+        <div class="label" style="color:rgba(238,244,250,.6)">Всего наиграно</div>
+        <div style="display:flex;align-items:flex-end;gap:16px;margin-top:4px;flex-wrap:wrap">
+          <div class="big">{{ t.total_hours|ru }}</div>
+          <div class="h-num" style="font-size:34px;line-height:1.6;opacity:.55">часов</div>
+        </div>
+        <div style="font-size:17px;margin-top:14px;opacity:.85;max-width:60ch;text-wrap:pretty">
+          Это <b>{{ t.days|ru }} {{ t.days|plural('день','дня','дней') }}</b> подряд,
+          <b>{{ t.weeks|ru }} {{ t.weeks|plural('неделя','недели','недель') }}</b> или <b>{{ t.years|ru }} {{ t.years|plural('год','года','лет') }}</b> непрерывной игры.
+          {% if t.per_day_min %}Каждый день с регистрации — <b>{{ t.per_day_min|hm }}</b>.{% endif %}
+        </div>
+      </div>
+
+      <div style="flex:none;width:300px;max-width:100%">
+        <div class="label" style="color:rgba(238,244,250,.6);margin-bottom:10px">Жизнь в днях, с {{ d.created_str[-4:] }} года</div>
+        <div class="blueprint" style="border-color:rgba(242,242,243,.3);padding:12px">
+          <i class="corner tl" style="color:rgba(242,242,243,.5)"></i><i class="corner tr" style="color:rgba(242,242,243,.5)"></i>
+          <i class="corner bl" style="color:rgba(242,242,243,.5)"></i><i class="corner br" style="color:rgba(242,242,243,.5)"></i>
+          <div style="display:grid;grid-template-columns:repeat(26,1fr);gap:2px">
+            {% for i in range(130) %}
+            <div style="aspect-ratio:1;background:{{ '#f2f2f3' if i >= 130 - grid_played else '#94bce3' }}"></div>
+            {% endfor %}
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;opacity:.65;margin-top:10px">
+            <span><b style="color:#94bce3">■</b> {{ (d.account_days - t.days)|ru }} {{ (d.account_days - t.days)|plural('день','дня','дней') }} вне игры</span>
+            <span><b>■</b> {{ t.days|ru }} {{ t.days|plural('день','дня','дней') }} в игре</span>
+          </div>
+        </div>
+        <div style="font-size:12px;opacity:.55;margin-top:10px;line-height:1.5">Каждый квадрат — {{ grid_step }} {{ grid_step|plural('день','дня','дней') }}. Светлые — те, что ушли целиком.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── четыре цифры ── -->
+  <div class="four">
+    <div>
+      <div class="label" style="color:var(--color-accent-300)">Стоимость библиотеки</div>
+      <div class="h-num">{% if m.reliable %}{{ m.library_value|ru }} ₽{% else %}—{% endif %}</div>
+      <div class="muted" style="font-size:12px">{{ t.games_owned|ru }} {{ t.games_owned|plural('игра','игры','игр') }}, по текущим ценам магазина</div>
+    </div>
+    <div>
+      <div class="label" style="color:var(--color-accent-300)">Цена часа</div>
+      <div class="h-num">{% if m.reliable %}{{ m.avg_per_hour|ru }} ₽{% else %}—{% endif %}</div>
+      <div class="muted" style="font-size:12px">библиотека ÷ наигранное время</div>
+    </div>
+    <div>
+      <div class="label" style="color:var(--color-accent-300)">Ни разу не запущено</div>
+      <div class="h-num">{{ t.games_never|ru }}</div>
+      <div class="muted" style="font-size:12px">{{ t.never_share }}% библиотеки</div>
+    </div>
+    <div>
+      <div class="label" style="color:var(--color-accent-300)">Заморожено в них</div>
+      <div class="h-num">{% if m.reliable %}{{ m.dead_value|ru }} ₽{% else %}—{% endif %}</div>
+      <div class="muted" style="font-size:12px">по текущим ценам</div>
+    </div>
+  </div>
+
+  {% if not m.reliable %}
+  <div class="section muted" style="font-size:13px">
+    Цены известны только по {{ m.coverage }}% наигранного времени, поэтому денежные цифры скрыты — они бы врали.
+    Кэш цен добирается в фоне, зайди позже.
+  </div>
+  {% endif %}
+
+  <!-- ── топ-5 + последний запуск ── -->
+  <div class="split">
+    <div>
+      <div class="section-head">
+        <h3>Топ-5 игр</h3>
+        <span class="label">{{ t.top5_share }}% всех часов</span>
+      </div>
+      {% for g in t.top %}
+      <div class="rank">
+        <span class="h-num" style="font-size:15px;color:var(--color-accent)">{{ "%02d"|format(loop.index) }}</span>
+        <div>
+          <div style="font-size:15px;font-weight:500;margin-bottom:5px">{{ g.name }}</div>
+          <div class="bar"><span style="width:{{ (g.hours / t.top[0].hours * 100)|round(1) if t.top[0].hours else 0 }}%"></span></div>
+        </div>
+        <span class="h-num num" style="font-size:19px">{{ g.hours|ru }} ч</span>
+        <span class="num muted" style="font-size:13px">{{ g.share }}%</span>
+      </div>
+      {% endfor %}
+      {% if t.rest_count %}
+      <div class="rank" style="opacity:.5;border-top:1px solid var(--color-divider);padding-top:14px;margin-top:16px">
+        <span class="h-num" style="font-size:15px">—</span>
+        <div>
+          <div style="font-size:15px;margin-bottom:5px">остальные {{ t.rest_count|ru }} {{ t.rest_count|plural('игра','игры','игр') }}</div>
+          <div class="bar"><span style="width:{{ (t.rest_hours / t.top[0].hours * 100)|round(1) if t.top[0].hours else 0 }}%;background:color-mix(in srgb,var(--color-text) 35%,transparent)"></span></div>
+        </div>
+        <span class="h-num num" style="font-size:19px">{{ t.rest_hours|ru }} ч</span>
+        <span class="num" style="font-size:13px">{{ t.rest_share }}%</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <div>
+      <div class="section-head">
+        <h3>Когда ты был там в последний раз</h3>
+        {% if t.peak %}<span class="label">пик — {{ t.peak.year }}</span>{% endif %}
+      </div>
+      {% if t.last_played %}
+      <div class="years" style="grid-template-columns:repeat({{ t.last_played|length }},1fr)">
+        {% set mx = t.last_played|map(attribute='count')|max %}
+        {% for y in t.last_played %}
+        <div class="{{ 'peak' if y.count == mx else '' }}" style="height:{{ (y.count / mx * 100)|round if mx else 0 }}%" title="{{ y.year }}: {{ y.count }}"></div>
+        {% endfor %}
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:8px" class="muted">
+        <span>{{ t.last_played[0].year }}</span><span>{{ t.last_played[-1].year }}</span>
+      </div>
+      {% endif %}
+      <p class="muted" style="font-size:13.5px;margin:18px 0 0;text-wrap:pretty">
+        Каждый столбик — сколько игр ты в последний раз открывал в этом году.
+        Разбивки наигранных часов по годам Steam не отдаёт, а дату последнего запуска — да.
+        {% if t.games_never %}Ещё {{ t.games_never|ru }} {{ t.games_never|plural('игра','игры','игр') }} не {{ t.games_never|plural('открывалась','открывались','открывались') }} ни разу.{% endif %}
+      </p>
+    </div>
+  </div>
+
+  <!-- ── недоступно в России ── -->
+  {% if b.count %}
+  <div class="section">
+    <div class="section-head">
+      <h3>Недоступно в России: {{ b.count|ru }} {{ b.count|plural('игра','игры','игр') }}</h3>
+      <span class="h-num" style="font-size:22px">≈ {{ b.value_rub|ru }} ₽</span>
+    </div>
+    <p class="muted" style="font-size:13.5px;margin:0 0 20px;max-width:80ch;text-wrap:pretty">
+      Эти игры у тебя есть, но в российском магазине их больше не продают. Оценка — по цене магазина США,
+      пересчитанной по курсу ЦБ{% if d.regions.usd_rate %} ({{ d.regions.usd_rate|round(1) }} ₽ за доллар){% endif %}.
+      Купить по ней нельзя, это просто мера того, что лежит в библиотеке.
+      В них наиграно {{ b.hours|ru }} {{ b.hours|plural('час','часа','часов') }} — {{ b.share_of_playtime }}% всего твоего времени.
+    </p>
+    <table class="table">
+      <thead><tr><th>Игра</th><th class="num">Часы</th><th class="num">Цена в US</th><th class="num">≈ в рублях</th></tr></thead>
+      <tbody>
+        {% for g in b.top %}
+        <tr><td>{{ g.name }}</td><td class="num">{{ g.hours|ru }}</td><td class="num">${{ g.usd }}</td><td class="num">{{ g.rub|ru }} ₽</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <!-- ── рубль за час ── -->
+  {% if m.reliable %}
+  <div class="section">
+    <div class="section-head">
+      <h3>Рубль за час</h3>
+      <span class="label">текущая цена ÷ наигранное время</span>
+    </div>
+    <div class="cards3">
+      {% if m.best %}
+      <div class="blueprint">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="label" style="color:var(--color-accent-300);margin-bottom:8px">Лучшая покупка</div>
+        <div style="font-size:16px;font-weight:500">{{ m.best.name }}</div>
+        <div class="h-num">{{ m.best.per_hour|ru }} ₽/ч</div>
+        <div class="muted" style="font-size:12.5px">{{ m.best.price|ru }} ₽ · {{ m.best.hours|ru }} {{ m.best.hours|plural('час','часа','часов') }}</div>
+      </div>
+      {% endif %}
+      {% if m.worst %}
+      <div class="blueprint">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="label" style="color:var(--color-accent-300);margin-bottom:8px">Худшая покупка</div>
+        <div style="font-size:16px;font-weight:500">{{ m.worst.name }}</div>
+        <div class="h-num">{{ m.worst.per_hour|ru }} ₽/ч</div>
+        <div class="muted" style="font-size:12.5px">{{ m.worst.price|ru }} ₽ · {{ m.worst.hours }} {{ m.worst.hours|round|int|plural('час','часа','часов') }}</div>
+      </div>
+      {% endif %}
+      {% if t.abandoned %}
+      <div class="blueprint">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="label" style="color:var(--color-accent-300);margin-bottom:8px">Самая заброшенная</div>
+        <div style="font-size:16px;font-weight:500">{{ t.abandoned.name }}</div>
+        <div class="h-num">{% if t.abandoned.years %}{{ t.abandoned.years }} г. {% endif %}{{ t.abandoned.months }} мес.</div>
+        <div class="muted" style="font-size:12.5px">последний запуск {{ t.abandoned.date }}, {{ t.abandoned.hours }} {{ t.abandoned.hours|round|int|plural('час','часа','часов') }}</div>
+      </div>
+      {% endif %}
+    </div>
+
+    <table class="table">
+      <thead><tr><th>Игра</th><th class="num">Часы</th><th class="num">Цена</th><th class="num">За час</th><th class="num">Вердикт</th></tr></thead>
+      <tbody>
+        {% for r in m.rows %}
+        <tr>
+          <td>{{ r.name }}</td>
+          <td class="num">{{ r.hours|ru }}</td>
+          <td class="num">{{ r.price|ru }} ₽</td>
+          <td class="num">{{ r.per_hour|ru }} ₽</td>
+          <td class="num"><span class="tag {{ {'окупилась':'tag-accent','нормально':'tag-neutral','переплата':'tag-outline'}[r.verdict] }}">{{ r.verdict }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <!-- ── кладбище ── -->
+  {% if m.graveyard %}
+  <div class="section">
+    <div class="section-head">
+      <h3>Кладбище: {{ t.games_never|ru }} {{ t.games_never|plural('игра','игры','игр') }} без единого часа</h3>
+      {% if m.reliable %}<span class="h-num" style="font-size:22px">{{ m.dead_value|ru }} ₽</span>{% endif %}
+    </div>
+    <p class="muted" style="font-size:13.5px;margin:0 0 20px">Каждая клетка — купленная и ни разу не запущенная игра. Наведи — покажем название.</p>
+    <div class="grave">
+      {% for g in m.graveyard[:51] %}
+      <a href="https://store.steampowered.com/app/{{ g.appid }}" target="_blank" rel="noopener"
+         title="{{ g.name }}{% if g.price %} · {{ g.price }} ₽{% endif %}">
+        <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/{{ g.appid }}/library_600x900.jpg"
+             alt="{{ g.name }}" loading="lazy"
+             onerror="this.onerror=null;this.src='https://cdn.cloudflare.steamstatic.com/steam/apps/{{ g.appid }}/header.jpg'">
+      </a>
+      {% endfor %}
+    </div>
+    {% if m.graveyard|length > 51 %}
+    <div class="muted" style="font-size:12px;padding-top:12px">Показан 51 из {{ m.graveyard|length }}</div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- ── регионы ── -->
+  {% if d.regions.common_games %}
+  <div class="section">
+    <div class="section-head">
+      <h3>Та же библиотека в других регионах</h3>
+      <span class="label">курс ЦБ на сегодня</span>
+    </div>
+    <p class="muted" style="font-size:13.5px;margin:0 0 20px;max-width:80ch;text-wrap:pretty">
+      Считаем по {{ d.regions.common_games|ru }} {{ d.regions.common_games|plural('игре','играм','играм') }}, которые продаются во всех шести регионах сразу —
+      иначе регион с урезанным каталогом выглядел бы дешевле просто потому, что части игр в нём нет.
+      Турция и Аргентина давно переведены на доллар, дешёвыми они быть перестали.
+    </p>
+    <table class="table">
+      <thead><tr><th>Регион</th><th class="num">Стоимость</th><th class="hide-sm">Относительно твоего</th><th class="num">±</th></tr></thead>
+      <tbody>
+        {% set mx = d.regions.list|map(attribute='total')|max %}
+        {% for r in d.regions.list %}
+        <tr>
+          <td>{{ r.name }}{% if r.cc == 'ru' %} <span class="hide-sm">— твой регион</span>{% endif %} <span class="muted" style="font-size:12px">{{ r.currency }}</span></td>
+          <td class="num h-num" style="font-size:17px">{{ r.total|ru }} ₽</td>
+          <td class="hide-sm" style="width:50%"><div class="bar" style="height:8px"><span style="width:{{ (r.total / mx * 100)|round if mx else 0 }}%"></span></div></td>
+          <td class="num" style="white-space:nowrap;width:88px">{% if r.cc == 'ru' %}—{% else %}{{ '+' if r.diff > 0 else '−' }}{{ r.diff|abs }}%{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <!-- ── подвал ── -->
+  <div class="footer2">
+    <div>
+      <h3>Отчёт живёт по постоянному адресу</h3>
+      <div class="blueprint" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;gap:12px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <span style="font-family:var(--font-mono);font-size:13.5px;overflow:hidden;text-overflow:ellipsis" id="permalink">{{ host }}/u/{{ d.steamid64 }}</span>
+        <button class="btn btn-ghost" style="font-size:13px" id="copy2">Копировать</button>
+      </div>
+      <p class="muted" style="font-size:13px;margin:14px 0 0">Кинь в чат — развернётся картинкой. Обновляется раз в 12 часов.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <h3 style="margin:0">Посчитать другой профиль</h3>
+      <form style="display:flex;gap:10px" action="/" method="get" id="again">
+        <input class="input" name="q" placeholder="steamcommunity.com/id/..." style="min-height:40px" required>
+        <button class="btn btn-primary blueprint" style="min-height:40px;padding-inline:20px;white-space:nowrap">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Посчитать
+        </button>
+      </form>
+      <div class="muted" style="font-size:12px;margin-top:auto">
+        Steam Stats не связан с Valve. Данные из открытого Steam Web API, цены — текущие цены магазина, а не цены покупки.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const link = document.getElementById("permalink").textContent.trim();
+for (const id of ["copy", "copy2"]) {
+  document.getElementById(id).addEventListener("click", async e => {
+    try {
+      await navigator.clipboard.writeText(link.startsWith("http") ? link : "https://" + link);
+      const b = e.currentTarget, old = b.textContent;
+      b.textContent = "Скопировано";
+      setTimeout(() => b.textContent = old, 1600);
+    } catch (_) {}
+  });
+}
+</script>
+</body>
+</html>
