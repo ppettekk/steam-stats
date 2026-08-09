@@ -27,7 +27,7 @@
       <a href="/" class="brand" style="color:inherit;text-decoration:none;display:flex;align-items:center;gap:11px"><img class="brand-mark" src="/static/logo-64.png" alt="" width="30" height="30">STEAM LIFE</a>
       <span class="muted hide-sm" style="font-size:12px;font-family:var(--font-mono)">/u/{{ d.steamid64 }}</span>
     </div>
-    <div style="display:flex;align-items:center;gap:10px">
+    <div class="topbar-actions">
       <a href="https://t.me/petrprogg" target="_blank" rel="noopener" class="tg-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.9 4.3 18.6 20c-.2 1.1-.9 1.4-1.8.9l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1L18 6.6c.4-.4-.1-.6-.6-.2L7.2 13.1l-5-1.6c-1-.3-1.1-1 .2-1.5l19.5-7.5c.9-.3 1.6.2 1.3 1.8z"/></svg>Автор</a>
       <div class="seg" id="cc-switch">
         {% for code, meta in regions.items() %}
@@ -266,9 +266,11 @@
     <p class="muted" style="font-size:13.5px;margin:0 0 20px">Каждая обложка — купленная и ни разу не запущенная игра. Наведи — покажем название и цену.</p>
     <div class="grave">
       {% for g in m.graveyard[:36] %}
-      <a href="https://store.steampowered.com/app/{{ g.appid }}" target="_blank" rel="noopener"
-         title="{{ g.name }}{% if g.price %} · {{ g.price }} {{ cur }}{% endif %}">
+      <a href="https://store.steampowered.com/app/{{ g.appid }}" target="_blank" rel="noopener">
         <span class="grave-fallback">{{ g.name }}</span>
+        <span class="grave-tip">
+          <b>{{ g.name }}</b>{% if g.price %}<i>{{ g.price|ru }} {{ cur }}</i>{% endif %}
+        </span>
         <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/{{ g.appid }}/library_600x900.jpg"
              alt="" loading="lazy"
              {% if g.capsule %}onerror="this.classList.add('wide');this.onerror=function(){this.remove()};this.src='https://cdn.cloudflare.steamstatic.com/steam/apps/{{ g.appid }}/{{ g.capsule }}'"{% else %}onerror="this.remove()"{% endif %}>
