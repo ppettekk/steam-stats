@@ -129,17 +129,29 @@ a:hover { color: var(--color-accent-300); }
 .hidden { display: none !important; }
 
 .tg-link {
-  display: inline-flex; align-items: center; gap: 6px; font-size: 13px;
-  color: var(--muted); text-decoration: none; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 36px; padding: 0 14px; border-radius: 3px;
+  font-family: var(--font-heading); font-weight: 600; font-size: 14px;
+  letter-spacing: .01em; text-decoration: none; white-space: nowrap;
+  color: var(--color-accent-300);
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 45%, transparent);
+  transition: background .15s, border-color .15s, color .15s;
 }
-.tg-link:hover { color: var(--color-accent-300); }
-.tg-link svg { flex: none; }
+.tg-link:hover {
+  color: #eef4fa;
+  background: color-mix(in srgb, var(--color-accent) 30%, transparent);
+  border-color: var(--color-accent);
+}
+.tg-link:active { background: color-mix(in srgb, var(--color-accent) 42%, transparent); }
+.tg-link svg { flex: none; opacity: .9; }
 
 /* — шапка — */
 .topbar {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
   padding: 12px clamp(16px, 3.4vw, 72px); border-bottom: 1px solid var(--color-divider);
 }
+.brand-mark { width: 30px; height: 30px; border-radius: 50%; display: block; flex: none; }
 .brand { font-family: var(--font-heading); font-weight: 700; font-size: 18px; letter-spacing: .02em; }
 
 /* — главная — */
