@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-<div class="shell">
+<div class="shell shell-home">
 
   <div class="topbar">
     <div style="display:flex;align-items:baseline;gap:10px">
@@ -45,7 +45,7 @@
           <div class="muted" style="font-size:12px">Профиль должен быть открыт.</div>
         </form>
 
-        <div style="display:flex;gap:28px;margin-top:34px">
+        <div style="display:flex;gap:28px;margin-top:clamp(24px,3.4vh,44px)">
           <div>
             <div class="h-num" style="font-size:26px;line-height:1">{{ "{:,}".format(stats.profiles).replace(",", " ") }}</div>
             <div class="label">профилей посчитано</div>

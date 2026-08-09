@@ -109,7 +109,15 @@ a:hover { color: var(--color-accent-300); }
 .label { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 .muted { color: var(--muted); }
 .h-num { font-family: var(--font-heading); font-weight: 600; font-variant-numeric: tabular-nums; }
-.shell { max-width: 1100px; margin: 0 auto; border-left: 1px solid var(--color-divider); border-right: 1px solid var(--color-divider); min-height: 100vh; }
+.shell {
+  max-width: 1320px; margin: 0 auto; min-height: 100vh;
+  border-left: 1px solid var(--color-divider); border-right: 1px solid var(--color-divider);
+}
+/* Главная: первый экран занимает высоту окна целиком, иначе на большом
+   мониторе под ним висит полтора экрана пустоты. */
+.shell-home { display: flex; flex-direction: column; }
+.shell-home #screen-form { flex: 1; display: flex; }
+.shell-home .hero { flex: 1; }
 .hidden { display: none !important; }
 
 /* — шапка — */
@@ -120,14 +128,14 @@ a:hover { color: var(--color-accent-300); }
 .brand { font-family: var(--font-heading); font-weight: 700; font-size: 18px; letter-spacing: .02em; }
 
 /* — главная — */
-.hero { display: grid; grid-template-columns: 1.15fr .85fr; min-height: 520px; }
-.hero-left { padding: 64px 44px 48px; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid var(--color-divider); }
-.hero-left h1 { font-size: 64px; line-height: .98; margin: 0 0 18px; max-width: 15ch; }
-.hero-right { background: var(--color-accent-900); color: #eef4fa; padding: 44px 38px; display: flex; flex-direction: column; justify-content: space-between; gap: 26px; }
+.hero { display: grid; grid-template-columns: 1.1fr .9fr; min-height: 540px; width: 100%; }
+.hero-left { padding: clamp(36px, 5vh, 72px) clamp(28px, 3.4vw, 60px); display: flex; flex-direction: column; justify-content: center; border-right: 1px solid var(--color-divider); }
+.hero-left h1 { font-size: clamp(46px, 4.6vw, 76px); line-height: .98; margin: 0 0 18px; max-width: 15ch; }
+.hero-right { background: var(--color-accent-900); color: #eef4fa; padding: clamp(30px, 4vh, 56px) clamp(26px, 2.6vw, 48px); display: flex; flex-direction: column; justify-content: center; gap: clamp(24px, 3.4vh, 44px); }
 .lookup { padding: 16px; display: flex; flex-direction: column; gap: 12px; max-width: 520px; }
 .lookup-row { display: flex; gap: 10px; }
 .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 18px; }
-.stat-grid .h-num { font-size: 30px; line-height: 1; }
+.stat-grid .h-num { font-size: clamp(24px, 1.9vw, 34px); line-height: 1; }
 
 /* — результат — */
 .result-hero { background: var(--color-accent-900); color: #eef4fa; padding: 40px 44px 36px; }
@@ -164,7 +172,7 @@ a:hover { color: var(--color-accent-300); }
 .footer2 > div:first-child { border-right: 1px solid var(--color-divider); }
 
 /* — загрузка и ошибка — */
-.panel { max-width: 520px; margin: 0 auto; padding: 44px 36px; display: flex; flex-direction: column; gap: 22px; }
+.panel { max-width: 520px; margin: 0 auto; min-height: calc(100vh - 60px); justify-content: center; padding: 44px 36px; display: flex; flex-direction: column; gap: 22px; }
 .progress { height: 6px; overflow: hidden; position: relative; background: color-mix(in srgb, var(--color-text) 8%, transparent); }
 .progress > span { position: absolute; inset: 0; width: 34%; background: var(--color-accent); animation: scan 1.6s ease-in-out infinite; }
 @keyframes scan { 0% { transform: translateX(-100%) } 100% { transform: translateX(300%) } }
