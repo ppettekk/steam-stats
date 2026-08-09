@@ -135,8 +135,9 @@ def render(data) -> Image.Image:
     nv = t["games_never"]
     tail = (f"{num(nv)} {plural(nv, 'игра', 'игры', 'игр')} "
             f"{plural(nv, 'так и не запущена', 'так и не запущены', 'так и не запущены')}.")
+    sym = m.get("symbol", "\u20bd")
     if m["reliable"] and m["library_value"]:
-        line = f"и {num(m['library_value'])} ₽ — по {m['avg_per_hour']:g} ₽ за час. {tail}"
+        line = f"и {num(m['library_value'])} {sym} — по {m['avg_per_hour']:g} {sym} за час. {tail}"
     else:
         line = f"{num(t['games_owned'])} {plural(t['games_owned'], 'игра', 'игры', 'игр')} в библиотеке. {tail}"
     d.text((PAD_X, 412), ellipsize(d, line, body(27), W - PAD_X * 2), font=body(27), fill=fade(0.82))
@@ -157,7 +158,7 @@ def render(data) -> Image.Image:
         val = f"{num(b['count'])} {plural(b['count'], 'игра', 'игры', 'игр')}"
         cap = "НЕДОСТУПНО В РОССИИ"
     elif m["reliable"] and m["dead_value"]:
-        val, cap = f"{num(m['dead_value'])} ₽", "В НЕЗАПУЩЕННОМ"
+        val, cap = f"{num(m['dead_value'])} {sym}", "В НЕЗАПУЩЕННОМ"
     else:
         val, cap = f"{t['weeks']:g}".replace(".", ",") + " нед", "НЕПРЕРЫВНОЙ ИГРЫ"
 

@@ -1,21 +1,31 @@
 import time
 from datetime import datetime
 
-from .db import HOME_CC, MIN_MINUTES_FOR_RATE, REGIONS
+from .db import HOME_CC, MIN_MINUTES_FOR_RATE, REGIONS, region
 
 VERDICT_GOOD = 20      # руб/час и ниже - окупилась
 VERDICT_BAD = 300      # руб/час и выше - переплата
 
 
-def _money(minor, rate=1.0):
-    """Steam отдаёт цену в минорных единицах: 190000 = 1900 руб."""
-    return minor / 100.0 * rate
+def _rub(cur, fx):
+    """Сколько рублей стоит единица валюты. Рубль к рублю - единица."""
+    return 1.0 if cur == "RUB" else (fx.get(cur) or 0)
 
 
-def build(summary, games, prices_by_cc, fx):
-    """prices_by_cc: {cc: {appid: row}}. fx: {currency: рублей за единицу}."""
+def build(summary, games, prices_by_cc, fx, home_cc=HOME_CC):
+    """prices_by_cc: {cc: {appid: row}}. fx: {currency: рублей за единицу}.
+    home_cc задаёт регион, в валюте которого считаются все суммы."""
     now = int(time.time())
-    home = prices_by_cc.get(HOME_CC, {})
+    home_reg = region(home_cc)
+    home_rate = _rub(home_reg["cur"], fx) or 1.0
+    home = prices_by_cc.get(home_cc, {})
+
+    def money(minor, cur):
+        """Цена из магазина -> сумма в валюте домашнего региона."""
+        return minor / 100.0 * _rub(cur, fx) / home_rate
+
+    def _money(minor, rate=1.0):
+        return minor / 100.0 * rate
 
     total_min = sum(g.get("playtime_forever", 0) for g in games)
     total_hours = total_min / 60.0
@@ -75,7 +85,8 @@ def build(summary, games, prices_by_cc, fx):
             graveyard.append({
                 "appid": appid,
                 "name": g.get("name"),
-                "price": round(_money(r["initial"])) if priced else None,
+                "price": round(money(r["initial"], r["currency"])) if priced else None,
+                "capsule": g.get("capsule_filename"),
             })
 
         if r and r["state"] in ("no_price", "not_sold"):
@@ -85,7 +96,7 @@ def build(summary, games, prices_by_cc, fx):
         if not priced:
             continue
 
-        price = _money(r["initial"])
+        price = money(r["initial"], r["currency"])
         library_value += price
         priced_minutes += minutes
 
@@ -134,16 +145,13 @@ def build(summary, games, prices_by_cc, fx):
     common = common or set()
 
     regions = []
-    for cc, name in REGIONS.items():
-        total, cur = 0.0, None
-        for appid in common:
-            r = prices_by_cc[cc][appid]
-            cur = r["currency"]
-            rate = 1.0 if cur == "RUB" else fx.get(cur, 0)
-            total += _money(r["initial"], rate)
-        regions.append({"cc": cc, "name": name, "currency": cur, "total": round(total)})
+    for cc, meta in REGIONS.items():
+        total = sum(money(prices_by_cc[cc][a]["initial"], prices_by_cc[cc][a]["currency"])
+                    for a in common)
+        regions.append({"cc": cc, "name": meta["name"], "currency": meta["cur"],
+                        "total": round(total), "is_home": cc == home_cc})
 
-    base = next((r["total"] for r in regions if r["cc"] == HOME_CC), 0)
+    base = next((r["total"] for r in regions if r["cc"] == home_cc), 0)
     for r in regions:
         r["diff"] = round((r["total"] - base) / base * 100) if base else 0
     regions.sort(key=lambda r: r["total"])
@@ -152,7 +160,9 @@ def build(summary, games, prices_by_cc, fx):
     blocked = []
     us = prices_by_cc.get("us", {})
     blocked_min = 0
-    for g in games:
+    # Только для России: по другим регионам мы опрашивали лишь то, что
+    # продаётся в RU, поэтому их not_sold в кэше неполный и врал бы.
+    for g in (games if home_cc == "ru" else []):
         r = home.get(g["appid"])
         if not r or r["state"] != "not_sold":
             continue
@@ -165,7 +175,7 @@ def build(summary, games, prices_by_cc, fx):
             "appid": g["appid"],
             "name": g.get("name", f"App {g['appid']}"),
             "usd": round(fb["initial"] / 100.0, 2),
-            "rub": round(_money(fb["initial"], fx.get("USD", 0))),
+            "rub": round(money(fb["initial"], "USD")),
             "hours": round(g.get("playtime_forever", 0) / 60.0),
         })
     blocked.sort(key=lambda x: -x["rub"])
@@ -198,8 +208,11 @@ def build(summary, games, prices_by_cc, fx):
             "dropped": dropped,
             "wasted": wasted,
         },
+        "home_cc": home_cc,
+        "home_region": home_reg["name"],
         "money": {
-            "currency": "RUB",
+            "currency": home_reg["cur"],
+            "symbol": home_reg["sym"],
             "library_value": round(library_value),
             "avg_per_hour": round(library_value / total_hours, 1) if total_hours else 0,
             "dead_value": round(dead_value),
@@ -212,7 +225,8 @@ def build(summary, games, prices_by_cc, fx):
             # целиком, а не показывает заниженную сумму без оговорок.
             "reliable": coverage >= 50,
         },
-        "regions": {"list": regions, "common_games": len(common), "usd_rate": fx.get("USD")},
+        "regions": {"list": regions, "common_games": len(common),
+                    "usd_rate": fx.get("USD"), "symbol": home_reg["sym"]},
         "blocked": {
             "count": len(blocked),
             "value_rub": round(sum(b["rub"] for b in blocked)),

@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-{% set t = d.time %}{% set m = d.money %}{% set b = d.blocked %}
+{% set t = d.time %}{% set m = d.money %}{% set b = d.blocked %}{% set cur = m.symbol %}
 <title>{{ d.persona }} — {{ t.total_hours|ru }} часов в Steam</title>
 <meta name="description" content="{{ t.total_hours|ru }} часов = {{ t.days|ru }} {{ t.days|plural('день','дня','дней') }} жизни. Посчитай свои.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="{{ host }}/u/{{ d.steamid64 }}">
 <meta property="og:title" content="{{ d.persona }} потратил {{ t.days|ru }} {{ t.days|plural('день','дня','дней') }} жизни в Steam">
-<meta property="og:description" content="{{ t.total_hours|ru }} часов{% if m.reliable and m.library_value %} и {{ m.library_value|ru }} ₽{% endif %}. Посчитай свои.">
+<meta property="og:description" content="{{ t.total_hours|ru }} часов{% if m.reliable and m.library_value %} и {{ m.library_value|ru }} {{ cur }}{% endif %}. Посчитай свои.">
 <meta property="og:image" content="{{ host }}/og/{{ d.steamid64 }}.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -29,6 +29,13 @@
     </div>
     <div style="display:flex;align-items:center;gap:10px">
       <a href="https://t.me/petrprogg" target="_blank" rel="noopener" class="tg-link"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.9 4.3 18.6 20c-.2 1.1-.9 1.4-1.8.9l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1L18 6.6c.4-.4-.1-.6-.6-.2L7.2 13.1l-5-1.6c-1-.3-1.1-1 .2-1.5l19.5-7.5c.9-.3 1.6.2 1.3 1.8z"/></svg>Автор</a>
+      <div class="seg" id="cc-switch">
+        {% for code, meta in regions.items() %}
+        <label class="seg-opt" title="{{ meta.name }}">
+          <input type="radio" name="cc" value="{{ code }}" {% if code == cc %}checked{% endif %}>{{ code|upper }}
+        </label>
+        {% endfor %}
+      </div>
       <button class="btn btn-secondary" style="min-height:36px" id="copy">Копировать ссылку</button>
       <a class="btn btn-primary blueprint" style="min-height:36px" href="/og/{{ d.steamid64 }}.jpg" download>
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Скачать картинку
@@ -85,12 +92,12 @@
   <div class="four">
     <div>
       <div class="label" style="color:var(--color-accent-300)">Стоимость библиотеки</div>
-      <div class="h-num">{% if m.reliable %}{{ m.library_value|ru }} ₽{% else %}—{% endif %}</div>
+      <div class="h-num">{% if m.reliable %}{{ m.library_value|ru }} {{ cur }}{% else %}—{% endif %}</div>
       <div class="muted" style="font-size:12px">{{ t.games_owned|ru }} {{ t.games_owned|plural('игра','игры','игр') }}, по текущим ценам магазина</div>
     </div>
     <div>
       <div class="label" style="color:var(--color-accent-300)">Цена часа</div>
-      <div class="h-num">{% if m.reliable %}{{ m.avg_per_hour|ru }} ₽{% else %}—{% endif %}</div>
+      <div class="h-num">{% if m.reliable %}{{ m.avg_per_hour|ru }} {{ cur }}{% else %}—{% endif %}</div>
       <div class="muted" style="font-size:12px">библиотека ÷ наигранное время</div>
     </div>
     <div>
@@ -100,7 +107,7 @@
     </div>
     <div>
       <div class="label" style="color:var(--color-accent-300)">Заморожено в них</div>
-      <div class="h-num">{% if m.reliable %}{{ m.dead_value|ru }} ₽{% else %}—{% endif %}</div>
+      <div class="h-num">{% if m.reliable %}{{ m.dead_value|ru }} {{ cur }}{% else %}—{% endif %}</div>
       <div class="muted" style="font-size:12px">по текущим ценам</div>
     </div>
   </div>
@@ -176,7 +183,7 @@
   <div class="section">
     <div class="section-head">
       <h3>Недоступно в России: {{ b.count|ru }} {{ b.count|plural('игра','игры','игр') }}</h3>
-      <span class="h-num" style="font-size:22px">≈ {{ b.value_rub|ru }} ₽</span>
+      <span class="h-num" style="font-size:22px">≈ {{ b.value_rub|ru }} {{ cur }}</span>
     </div>
     <p class="muted" style="font-size:13.5px;margin:0 0 20px;max-width:80ch;text-wrap:pretty">
       Эти игры у тебя есть, но в российском магазине их больше не продают. Оценка — по цене магазина США,
@@ -188,7 +195,7 @@
       <thead><tr><th>Игра</th><th class="num">Часы</th><th class="num">Цена в US</th><th class="num">≈ в рублях</th></tr></thead>
       <tbody>
         {% for g in b.top %}
-        <tr><td>{{ g.name }}</td><td class="num">{{ g.hours|ru }}</td><td class="num">${{ g.usd }}</td><td class="num">{{ g.rub|ru }} ₽</td></tr>
+        <tr><td>{{ g.name }}</td><td class="num">{{ g.hours|ru }}</td><td class="num">${{ g.usd }}</td><td class="num">{{ g.rub|ru }} {{ cur }}</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -208,8 +215,8 @@
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div class="label" style="color:var(--color-accent-300);margin-bottom:8px">Лучшая покупка</div>
         <div style="font-size:16px;font-weight:500">{{ m.best.name }}</div>
-        <div class="h-num">{{ m.best.per_hour|ru }} ₽/ч</div>
-        <div class="muted" style="font-size:12.5px">{{ m.best.price|ru }} ₽ · {{ m.best.hours|ru }} {{ m.best.hours|plural('час','часа','часов') }}</div>
+        <div class="h-num">{{ m.best.per_hour|ru }} {{ cur }}/ч</div>
+        <div class="muted" style="font-size:12.5px">{{ m.best.price|ru }} {{ cur }} · {{ m.best.hours|ru }} {{ m.best.hours|plural('час','часа','часов') }}</div>
       </div>
       {% endif %}
       {% if m.worst %}
@@ -217,8 +224,8 @@
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div class="label" style="color:var(--color-accent-300);margin-bottom:8px">Худшая покупка</div>
         <div style="font-size:16px;font-weight:500">{{ m.worst.name }}</div>
-        <div class="h-num">{{ m.worst.per_hour|ru }} ₽/ч</div>
-        <div class="muted" style="font-size:12.5px">{{ m.worst.price|ru }} ₽ · {{ m.worst.hours }} {{ m.worst.hours|round|int|plural('час','часа','часов') }}</div>
+        <div class="h-num">{{ m.worst.per_hour|ru }} {{ cur }}/ч</div>
+        <div class="muted" style="font-size:12.5px">{{ m.worst.price|ru }} {{ cur }} · {{ m.worst.hours }} {{ m.worst.hours|round|int|plural('час','часа','часов') }}</div>
       </div>
       {% endif %}
       {% if t.wasted %}
@@ -226,7 +233,7 @@
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div class="label" style="color:var(--color-accent-300);margin-bottom:8px">Деньги на ветер</div>
         <div style="font-size:16px;font-weight:500">{{ t.wasted.name }}</div>
-        <div class="h-num">{{ t.wasted.price|ru }} ₽</div>
+        <div class="h-num">{{ t.wasted.price|ru }} {{ cur }}</div>
         <div class="muted" style="font-size:12.5px">запущена на {{ t.wasted.minutes }} {{ t.wasted.minutes|plural('минуту','минуты','минут') }} и брошена</div>
       </div>
       {% endif %}
@@ -239,8 +246,8 @@
         <tr>
           <td>{{ r.name }}</td>
           <td class="num">{{ r.hours|ru }}</td>
-          <td class="num">{{ r.price|ru }} ₽</td>
-          <td class="num">{{ r.per_hour|ru }} ₽</td>
+          <td class="num">{{ r.price|ru }} {{ cur }}</td>
+          <td class="num">{{ r.per_hour|ru }} {{ cur }}</td>
           <td class="num"><span class="tag {{ {'окупилась':'tag-accent','нормально':'tag-neutral','переплата':'tag-outline'}[r.verdict] }}">{{ r.verdict }}</span></td>
         </tr>
         {% endfor %}
@@ -254,16 +261,17 @@
   <div class="section">
     <div class="section-head">
       <h3>Кладбище: {{ t.games_never|ru }} {{ t.games_never|plural('игра','игры','игр') }} без единого часа</h3>
-      {% if m.reliable %}<span class="h-num" style="font-size:22px">{{ m.dead_value|ru }} ₽</span>{% endif %}
+      {% if m.reliable %}<span class="h-num" style="font-size:22px">{{ m.dead_value|ru }} {{ cur }}</span>{% endif %}
     </div>
     <p class="muted" style="font-size:13.5px;margin:0 0 20px">Каждая клетка — купленная и ни разу не запущенная игра. Наведи — покажем название.</p>
     <div class="grave">
       {% for g in m.graveyard[:51] %}
       <a href="https://store.steampowered.com/app/{{ g.appid }}" target="_blank" rel="noopener"
-         title="{{ g.name }}{% if g.price %} · {{ g.price }} ₽{% endif %}">
+         title="{{ g.name }}{% if g.price %} · {{ g.price }} {{ cur }}{% endif %}">
+        <span class="grave-fallback">{{ g.name }}</span>
         <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/{{ g.appid }}/library_600x900.jpg"
-             alt="{{ g.name }}" loading="lazy"
-             onerror="this.onerror=null;this.src='https://cdn.cloudflare.steamstatic.com/steam/apps/{{ g.appid }}/header.jpg'">
+             alt="" loading="lazy"
+             {% if g.capsule %}onerror="this.onerror=null;this.src='https://cdn.cloudflare.steamstatic.com/steam/apps/{{ g.appid }}/{{ g.capsule }}'"{% else %}onerror="this.remove()"{% endif %}>
       </a>
       {% endfor %}
     </div>
@@ -281,9 +289,9 @@
       <span class="label">курс ЦБ на сегодня</span>
     </div>
     <p class="muted" style="font-size:13.5px;margin:0 0 20px;max-width:80ch;text-wrap:pretty">
-      Считаем по {{ d.regions.common_games|ru }} {{ d.regions.common_games|plural('игре','играм','играм') }}, которые продаются во всех шести регионах сразу —
+      Суммы в валюте выбранного региона. Считаем по {{ d.regions.common_games|ru }} {{ d.regions.common_games|plural('игре','играм','играм') }}, которые продаются во всех шести регионах сразу —
       иначе регион с урезанным каталогом выглядел бы дешевле просто потому, что части игр в нём нет.
-      Турция и Аргентина давно переведены на доллар, дешёвыми они быть перестали.
+      Турция давно переведена на доллар, дешёвым этот регион быть перестал.
     </p>
     <table class="table">
       <thead><tr><th>Регион</th><th class="num">Стоимость</th><th class="hide-sm">Относительно твоего</th><th class="num">±</th></tr></thead>
@@ -291,10 +299,10 @@
         {% set mx = d.regions.list|map(attribute='total')|max %}
         {% for r in d.regions.list %}
         <tr>
-          <td>{{ r.name }}{% if r.cc == 'ru' %} <span class="hide-sm">— твой регион</span>{% endif %} <span class="muted" style="font-size:12px">{{ r.currency }}</span></td>
-          <td class="num h-num" style="font-size:17px">{{ r.total|ru }} ₽</td>
+          <td>{{ r.name }}{% if r.is_home %} <span class="hide-sm">— выбранный регион</span>{% endif %} <span class="muted" style="font-size:12px">{{ r.currency }}</span></td>
+          <td class="num h-num" style="font-size:17px">{{ r.total|ru }} {{ cur }}</td>
           <td class="hide-sm" style="width:50%"><div class="bar" style="height:8px"><span style="width:{{ (r.total / mx * 100)|round if mx else 0 }}%"></span></div></td>
-          <td class="num" style="white-space:nowrap;width:88px">{% if r.cc == 'ru' %}—{% else %}{{ '+' if r.diff > 0 else '−' }}{{ r.diff|abs }}%{% endif %}</td>
+          <td class="num" style="white-space:nowrap;width:88px">{% if r.is_home %}—{% else %}{{ '+' if r.diff > 0 else '−' }}{{ r.diff|abs }}%{% endif %}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -331,6 +339,14 @@
 </div>
 
 <script>
+document.getElementById("cc-switch").addEventListener("change", e => {
+  const u = new URL(location.href);
+  // ru - регион по умолчанию, в адресе его не тащим
+  if (e.target.value === "ru") u.searchParams.delete("cc");
+  else u.searchParams.set("cc", e.target.value);
+  location.href = u.toString();
+});
+
 const link = document.getElementById("permalink").textContent.trim();
 for (const id of ["copy", "copy2"]) {
   document.getElementById(id).addEventListener("click", async e => {

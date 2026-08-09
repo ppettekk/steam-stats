@@ -58,7 +58,8 @@ def _host(request: Request) -> str:
 
 
 # ── данные ───────────────────────────────────────────────────
-async def _compute(q: str, refresh: bool = False):
+async def _compute(q: str, refresh: bool = False, cc: str = db.HOME_CC):
+    cc = cc if cc in db.REGIONS else db.HOME_CC
     conn = db.connect()
     try:
         kind, value = steam.parse_input(q)
@@ -67,7 +68,7 @@ async def _compute(q: str, refresh: bool = False):
         if kind == "id64" and not refresh:
             row = conn.execute(
                 "SELECT payload, created_at FROM results WHERE steamid64=? AND cc=?",
-                (value, db.HOME_CC),
+                (value, cc),
             ).fetchone()
             if row and time.time() - row["created_at"] < db.RESULT_TTL:
                 return json.loads(row["payload"])
@@ -76,18 +77,18 @@ async def _compute(q: str, refresh: bool = False):
 
         row = conn.execute(
             "SELECT payload, created_at FROM results WHERE steamid64=? AND cc=?",
-            (steamid64, db.HOME_CC),
+            (steamid64, cc),
         ).fetchone()
         if row and not refresh and time.time() - row["created_at"] < db.RESULT_TTL:
             return json.loads(row["payload"])
 
         appids = [g["appid"] for g in games]
         prices_by_cc = {cc: db.get_prices(conn, appids, cc) for cc in db.REGIONS}
-        payload = calc.build(summary, games, prices_by_cc, db.get_fx(conn))
+        payload = calc.build(summary, games, prices_by_cc, db.get_fx(conn), home_cc=cc)
 
         conn.execute(
             "INSERT OR REPLACE INTO results(steamid64, cc, payload, created_at) VALUES (?,?,?,?)",
-            (steamid64, db.HOME_CC, json.dumps(payload, ensure_ascii=False), int(time.time())),
+            (steamid64, cc, json.dumps(payload, ensure_ascii=False), int(time.time())),
         )
         conn.execute(
             "UPDATE meta SET profiles = profiles + 1, hours = hours + ? WHERE id = 1",
@@ -106,7 +107,8 @@ async def _compute(q: str, refresh: bool = False):
         # Карточку рисуем сразу: ссылку кинут в чат в ближайшие секунды,
         # и мессенджер придёт за og:image раньше, чем человек обновит страницу.
         try:
-            render.render_to_file(payload, steamid64)
+            if cc == db.HOME_CC:
+                render.render_to_file(payload, steamid64)
         except Exception:
             pass
 
@@ -115,11 +117,11 @@ async def _compute(q: str, refresh: bool = False):
         conn.close()
 
 
-def _cached(steamid64: str):
+def _cached(steamid64: str, cc: str = db.HOME_CC):
     conn = db.connect()
     try:
         row = conn.execute(
-            "SELECT payload FROM results WHERE steamid64=? AND cc=?", (steamid64, db.HOME_CC)
+            "SELECT payload FROM results WHERE steamid64=? AND cc=?", (steamid64, cc)
         ).fetchone()
         return json.loads(row["payload"]) if row else None
     finally:
@@ -145,9 +147,9 @@ def index(request: Request):
 
 
 @app.get("/api/lookup")
-async def lookup(q: str, refresh: bool = False):
+async def lookup(q: str, refresh: bool = False, cc: str = db.HOME_CC):
     try:
-        return JSONResponse(await _compute(q, refresh))
+        return JSONResponse(await _compute(q, refresh, cc))
     except steam.SteamError as e:
         raise HTTPException(400, {"code": e.code, "message": ERROR_TEXT.get(e.code, str(e))})
     except HTTPException:
@@ -158,11 +160,12 @@ async def lookup(q: str, refresh: bool = False):
 
 
 @app.get("/u/{steamid64}", response_class=HTMLResponse)
-async def result(request: Request, steamid64: str):
-    d = _cached(steamid64)
+async def result(request: Request, steamid64: str, cc: str = db.HOME_CC):
+    cc = cc if cc in db.REGIONS else db.HOME_CC
+    d = _cached(steamid64, cc)
     if not d:
         try:
-            d = await _compute(steamid64)
+            d = await _compute(steamid64, cc=cc)
         except Exception:
             return RedirectResponse("/", status_code=302)
 
@@ -179,6 +182,8 @@ async def result(request: Request, steamid64: str):
             "host": _host(request),
             "grid_step": step,
             "grid_played": played_cells,
+            "cc": cc,
+            "regions": db.REGIONS,
         },
     )
 
