@@ -1,4 +1,4 @@
-"""OG-карточка 1200x630 на Pillow.
+"""OG-карточка Steam Life, 1200x630, на Pillow.
 
 Headless-браузер сюда не ставим намеренно: Playwright съедает полгига на
 инстанс, а на машине 708 МБ и рядом живёт Kwork Radar.
@@ -118,7 +118,7 @@ def render(data) -> Image.Image:
     d.text((nx, PAD_Y + 2), ellipsize(d, data["persona"] or "—", cond(38), 620), font=cond(38), fill=FG)
     d.text((nx, PAD_Y + 46), f"в Steam с {data['created_str'] or '—'}", font=body(21), fill=fade(0.55))
 
-    label = "STEAM STATS"
+    label = "STEAM LIFE"
     lw = sum(d.textlength(c, font=cond(24)) + 3.5 for c in label)
     tracked(d, (W - PAD_X - lw, PAD_Y + 12), label, cond(24), fade(0.55), 3.5)
 

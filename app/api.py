@@ -11,7 +11,7 @@ from fastapi.templating import Jinja2Templates
 from . import calc, db, render, steam
 
 BASE = Path(__file__).resolve().parent.parent
-app = FastAPI(title="Steam Stats", docs_url=None, redoc_url=None)
+app = FastAPI(title="Steam Life", docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
 templates = Jinja2Templates(directory=str(BASE / "templates"))
 
@@ -166,10 +166,10 @@ async def result(request: Request, steamid64: str):
         except Exception:
             return RedirectResponse("/", status_code=302)
 
-    # Сетка «жизнь в днях»: 130 клеток, каждая — своя доля от возраста аккаунта.
+    # Сетка «жизнь в днях»: 182 клетки (26 x 7), каждая — доля возраста аккаунта.
     days = max(1, d["account_days"])
-    step = max(1, round(days / 130))
-    played_cells = min(130, round(d["time"]["days"] / step))
+    step = max(1, round(days / 182))
+    played_cells = min(182, round(d["time"]["days"] / step))
 
     return templates.TemplateResponse(
         request,

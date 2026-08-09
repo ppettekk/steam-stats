@@ -3,8 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Steam Stats — сколько лет ты отдал Steam</title>
-<meta name="description" content="Кинь ссылку на профиль Steam — посчитаем часы, переведём их в дни, недели и деньги.">
+<title>Steam Life — сколько лет ты отдал Steam</title>
+<meta name="yandex-verification" content="eb9bfcb341805e19" />
+<link rel="icon" href="/static/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+<meta name="description" content="Вставь ссылку на профиль Steam — посчитаем часы, переведём их в дни, недели и деньги.">
 <meta property="og:title" content="Сколько лет ты уже отдал Steam">
 <meta property="og:description" content="Часы, дни, деньги и игры, которые ты так и не запустил.">
 <link rel="stylesheet" href="/static/styles.css">
@@ -14,7 +17,8 @@
 
   <div class="topbar">
     <div style="display:flex;align-items:baseline;gap:10px">
-      <span class="brand">STEAM STATS</span>
+      <img src="/static/logo-64.png" alt="" width="26" height="26" style="border-radius:50%">
+      <span class="brand">STEAM LIFE</span>
       <span class="kicker">Playtime audit</span>
     </div>
     <span class="muted" style="font-size:12px">Не связан с Valve</span>
@@ -24,10 +28,9 @@
   <div id="screen-form">
     <div class="hero">
       <div class="hero-left">
-        <div class="kicker" style="margin-bottom:16px">Отчёт №1 о прожитой жизни</div>
         <h1>Сколько лет ты уже отдал Steam</h1>
         <p style="font-size:16px;max-width:46ch;margin:0 0 30px;color:color-mix(in srgb,var(--color-text) 72%,transparent);text-wrap:pretty">
-          Кинь ссылку на профиль — посчитаем часы, переведём их в дни, недели и деньги.
+          Вставь ссылку на профиль — посчитаем часы, переведём их в дни, недели и деньги.
           И покажем, сколько лежит в играх, которые ты ни разу не запустил.
         </p>
 
@@ -58,7 +61,6 @@
       </div>
 
       <div class="hero-right">
-        <div class="label" style="color:rgba(238,244,250,.6)">Sample output / превью отчёта</div>
         <div>
           <div class="h-num" style="font-size:96px;line-height:.85;letter-spacing:-.02em">8 214</div>
           <div style="font-size:13px;letter-spacing:.16em;text-transform:uppercase;opacity:.65;margin-top:6px">часов · 342 дня · 48,9 недель</div>
@@ -191,5 +193,6 @@ $("#form").addEventListener("submit", ev => {
 $("#err-retry").addEventListener("click", () => lookup(lastQuery));
 $("#err-back").addEventListener("click", () => { show("form"); $("#q").focus(); });
 </script>
+{% include "_metrika.html" %}
 </body>
 </html>
