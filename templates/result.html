@@ -263,20 +263,20 @@
       <h3>Кладбище: {{ t.games_never|ru }} {{ t.games_never|plural('игра','игры','игр') }} без единого часа</h3>
       {% if m.reliable %}<span class="h-num" style="font-size:22px">{{ m.dead_value|ru }} {{ cur }}</span>{% endif %}
     </div>
-    <p class="muted" style="font-size:13.5px;margin:0 0 20px">Каждая клетка — купленная и ни разу не запущенная игра. Наведи — покажем название.</p>
+    <p class="muted" style="font-size:13.5px;margin:0 0 20px">Каждая обложка — купленная и ни разу не запущенная игра. Наведи — покажем название и цену.</p>
     <div class="grave">
-      {% for g in m.graveyard[:51] %}
+      {% for g in m.graveyard[:36] %}
       <a href="https://store.steampowered.com/app/{{ g.appid }}" target="_blank" rel="noopener"
          title="{{ g.name }}{% if g.price %} · {{ g.price }} {{ cur }}{% endif %}">
         <span class="grave-fallback">{{ g.name }}</span>
         <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/{{ g.appid }}/library_600x900.jpg"
              alt="" loading="lazy"
-             {% if g.capsule %}onerror="this.onerror=null;this.src='https://cdn.cloudflare.steamstatic.com/steam/apps/{{ g.appid }}/{{ g.capsule }}'"{% else %}onerror="this.remove()"{% endif %}>
+             {% if g.capsule %}onerror="this.classList.add('wide');this.onerror=function(){this.remove()};this.src='https://cdn.cloudflare.steamstatic.com/steam/apps/{{ g.appid }}/{{ g.capsule }}'"{% else %}onerror="this.remove()"{% endif %}>
       </a>
       {% endfor %}
     </div>
-    {% if m.graveyard|length > 51 %}
-    <div class="muted" style="font-size:12px;padding-top:12px">Показан 51 из {{ m.graveyard|length }}</div>
+    {% if m.graveyard|length > 36 %}
+    <div class="muted" style="font-size:12px;padding-top:12px">Показано 36 из {{ m.graveyard|length }}</div>
     {% endif %}
   </div>
   {% endif %}
