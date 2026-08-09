@@ -100,9 +100,10 @@ a:hover { color: var(--color-accent-300); }
 /* .table th перебивает .num по специфичности, поэтому заголовки числовых
    колонок надо выравнивать явно - иначе подпись слева, значение справа. */
 .table th.num { text-align: right; }
-/* На 2К колонки растягиваются так, что подпись и число расходятся на пол-экрана.
-   Таблицам хватает 1500px, дальше читать неудобно. */
-.table { max-width: 1500px; }
+/* Первая колонка забирает остаток ширины, числовые прижимаются вправо
+   и не расползаются по всему экрану. */
+.table th.num, .table td.num { width: 1%; min-width: 150px; white-space: nowrap; }
+.table th:first-child, .table td:first-child { width: auto; }
 .table tbody tr:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 .tag { display: inline-flex; font-size: 11px; padding: 3px 10px; }
