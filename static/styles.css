@@ -110,8 +110,9 @@ a:hover { color: var(--color-accent-300); }
 .muted { color: var(--muted); }
 .h-num { font-family: var(--font-heading); font-weight: 600; font-variant-numeric: tabular-nums; }
 .shell {
-  max-width: 1320px; margin: 0 auto; min-height: 100vh;
-  border-left: 1px solid var(--color-divider); border-right: 1px solid var(--color-divider);
+  /* Во всю ширину окна: на 2К колонка по центру смотрелась потерянной.
+     Длину строк держат max-width в ch у самих текстовых блоков. */
+  width: 100%; min-height: 100vh;
 }
 /* Главная: первый экран занимает высоту окна целиком, иначе на большом
    мониторе под ним висит полтора экрана пустоты. */
@@ -123,33 +124,33 @@ a:hover { color: var(--color-accent-300); }
 /* — шапка — */
 .topbar {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  padding: 12px 28px; border-bottom: 1px solid var(--color-divider);
+  padding: 12px clamp(16px, 3.4vw, 72px); border-bottom: 1px solid var(--color-divider);
 }
 .brand { font-family: var(--font-heading); font-weight: 700; font-size: 18px; letter-spacing: .02em; }
 
 /* — главная — */
 .hero { display: grid; grid-template-columns: 1.1fr .9fr; min-height: 540px; width: 100%; }
-.hero-left { padding: clamp(36px, 5vh, 72px) clamp(28px, 3.4vw, 60px); display: flex; flex-direction: column; justify-content: center; border-right: 1px solid var(--color-divider); }
-.hero-left h1 { font-size: clamp(46px, 4.6vw, 76px); line-height: .98; margin: 0 0 18px; max-width: 15ch; }
-.hero-right { background: var(--color-accent-900); color: #eef4fa; padding: clamp(30px, 4vh, 56px) clamp(26px, 2.6vw, 48px); display: flex; flex-direction: column; justify-content: center; gap: clamp(24px, 3.4vh, 44px); }
+.hero-left { padding: clamp(36px, 5vh, 80px) clamp(28px, 5vw, 130px); display: flex; flex-direction: column; justify-content: center; border-right: 1px solid var(--color-divider); }
+.hero-left h1 { font-size: clamp(46px, 3.9vw, 92px); line-height: .98; margin: 0 0 18px; max-width: 15ch; }
+.hero-right { background: var(--color-accent-900); color: #eef4fa; padding: clamp(30px, 4vh, 64px) clamp(26px, 3.6vw, 96px); display: flex; flex-direction: column; justify-content: center; gap: clamp(24px, 3.4vh, 44px); }
 .lookup { padding: 16px; display: flex; flex-direction: column; gap: 12px; max-width: 520px; }
 .lookup-row { display: flex; gap: 10px; }
 .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 18px; }
 .stat-grid .h-num { font-size: clamp(24px, 1.9vw, 34px); line-height: 1; }
 
 /* — результат — */
-.result-hero { background: var(--color-accent-900); color: #eef4fa; padding: 40px 44px 36px; }
+.result-hero { background: var(--color-accent-900); color: #eef4fa; padding: 40px clamp(24px, 3.4vw, 72px) 36px; }
 .result-hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 40px; flex-wrap: wrap; }
 .big { font-family: var(--font-heading); font-weight: 600; font-size: 120px; line-height: .82; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 .avatar { width: 52px; height: 52px; background: rgba(242,242,243,.12); border-color: rgba(242,242,243,.3); object-fit: cover; }
 .four { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--color-divider); }
-.four > div { padding: 22px 24px; border-right: 1px solid var(--color-divider); }
+.four > div { padding: 22px clamp(20px, 2.2vw, 44px); border-right: 1px solid var(--color-divider); }
 .four > div:last-child { border-right: none; }
 .four .h-num { font-size: 38px; line-height: 1.15; }
 .split { display: grid; grid-template-columns: 1.25fr 1fr; border-bottom: 1px solid var(--color-divider); }
-.split > div { padding: 30px 32px; }
+.split > div { padding: 30px clamp(24px, 2.6vw, 56px); }
 .split > div:first-child { border-right: 1px solid var(--color-divider); }
-.section { padding: 30px 32px; border-bottom: 1px solid var(--color-divider); }
+.section { padding: 30px clamp(24px, 3.4vw, 72px); border-bottom: 1px solid var(--color-divider); }
 .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
 .section-head h3 { font-size: 22px; margin: 0; }
 
@@ -168,7 +169,7 @@ a:hover { color: var(--color-accent-300); }
 .grave img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.05); opacity: .75; }
 .grave a:hover img { filter: none; opacity: 1; }
 .footer2 { display: grid; grid-template-columns: 1fr 1fr; }
-.footer2 > div { padding: 30px 32px; }
+.footer2 > div { padding: 30px clamp(24px, 3.4vw, 72px); }
 .footer2 > div:first-child { border-right: 1px solid var(--color-divider); }
 
 /* — загрузка и ошибка — */
