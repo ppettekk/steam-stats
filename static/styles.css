@@ -97,6 +97,12 @@ a:hover { color: var(--color-accent-300); }
   padding: var(--space-2); border-bottom: 1px solid var(--color-divider);
 }
 .table td { padding: var(--space-2); border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent); }
+/* .table th перебивает .num по специфичности, поэтому заголовки числовых
+   колонок надо выравнивать явно - иначе подпись слева, значение справа. */
+.table th.num { text-align: right; }
+/* На 2К колонки растягиваются так, что подпись и число расходятся на пол-экрана.
+   Таблицам хватает 1500px, дальше читать неудобно. */
+.table { max-width: 1500px; }
 .table tbody tr:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 .tag { display: inline-flex; font-size: 11px; padding: 3px 10px; }
