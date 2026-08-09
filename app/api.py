@@ -1,4 +1,5 @@
 import json
+import logging
 import time
 from pathlib import Path
 
@@ -152,6 +153,7 @@ async def lookup(q: str, refresh: bool = False):
     except HTTPException:
         raise
     except Exception:
+        logging.exception("lookup failed: %s", q)
         raise HTTPException(502, {"code": "upstream", "message": ERROR_TEXT["upstream"]})
 
 

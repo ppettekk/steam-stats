@@ -71,6 +71,9 @@ async def get_owned_games(client, steamid64: str) -> list:
             "key": db.STEAM_KEY,
             "steamid": steamid64,
             "include_appinfo": 1,
+            # даёт capsule_filename и has_dlc; rtime_last_played Valve
+            # больше не отдаёт ни с этим флагом, ни через input_json
+            "include_extended_appinfo": 1,
             "include_played_free_games": 1,
             "skip_unvetted_apps": "false",
         },

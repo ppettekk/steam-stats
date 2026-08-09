@@ -5,7 +5,7 @@ from pathlib import Path
 
 BASE = Path(__file__).resolve().parent.parent
 DB_PATH = os.getenv("STEAMSTATS_DB", str(BASE / "data" / "steam.db"))
-STEAM_KEY = os.getenv("STEAM_API_KEY", "")
+STEAM_API_KEY = STEAM_KEY = os.getenv("STEAM_API_KEY", "")
 
 HOME_CC = "ru"          # базовый регион
 FALLBACK_CC = "us"      # чем оцениваем то, что в RU не продаётся
@@ -26,7 +26,7 @@ PRICE_TTL = 7 * 24 * 3600
 
 # Порог, ниже которого не считаем рубль за час: 5 минут запуска дают
 # бессмысленные миллионы рублей в час и ломают номинацию "худшая покупка".
-MIN_MINUTES_FOR_RATE = 60
+MIN_MINUTES_FOR_RATE = 180
 
 
 def connect():
@@ -39,6 +39,11 @@ def connect():
 
 
 def init():
+    # Пустой ключ даёт 403 на первом же запросе и маскируется под
+    # "Steam не отвечает". Лучше не стартовать вообще.
+    if not STEAM_KEY:
+        raise RuntimeError("STEAM_API_KEY пуст: проверь .env и EnvironmentFile в юните")
+
     schema = (Path(__file__).resolve().parent / "schema.sql").read_text()
     with connect() as conn:
         conn.executescript(schema)

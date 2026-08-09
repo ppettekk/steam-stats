@@ -142,24 +142,28 @@
 
     <div>
       <div class="section-head">
-        <h3>Когда ты был там в последний раз</h3>
-        {% if t.peak %}<span class="label">пик — {{ t.peak.year }}</span>{% endif %}
+        <h3>На что ушла библиотека</h3>
+        {% if t.peak %}<span class="label">чаще всего — {{ t.peak.label }}</span>{% endif %}
       </div>
-      {% if t.last_played %}
-      <div class="years" style="grid-template-columns:repeat({{ t.last_played|length }},1fr)">
-        {% set mx = t.last_played|map(attribute='count')|max %}
-        {% for y in t.last_played %}
-        <div class="{{ 'peak' if y.count == mx else '' }}" style="height:{{ (y.count / mx * 100)|round if mx else 0 }}%" title="{{ y.year }}: {{ y.count }}"></div>
+      {% set mx = t.buckets|map(attribute='count')|max %}
+      <div class="years" style="grid-template-columns:repeat({{ t.buckets|length }},1fr)">
+        {% for bk in t.buckets %}
+        <div class="{{ 'peak' if bk.count == mx and mx else '' }}" style="height:{{ (bk.count / mx * 100)|round if mx else 0 }}%" title="{{ bk.label }}: {{ bk.count }}"></div>
         {% endfor %}
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:8px" class="muted">
-        <span>{{ t.last_played[0].year }}</span><span>{{ t.last_played[-1].year }}</span>
+      <div style="display:grid;grid-template-columns:repeat({{ t.buckets|length }},1fr);gap:5px;margin-top:8px">
+        {% for bk in t.buckets %}
+        <div style="text-align:center">
+          <div class="h-num" style="font-size:15px">{{ bk.count }}</div>
+          <div class="muted" style="font-size:10px;white-space:nowrap">{{ bk.label }}</div>
+        </div>
+        {% endfor %}
       </div>
-      {% endif %}
       <p class="muted" style="font-size:13.5px;margin:18px 0 0;text-wrap:pretty">
-        Каждый столбик — сколько игр ты в последний раз открывал в этом году.
-        Разбивки наигранных часов по годам Steam не отдаёт, а дату последнего запуска — да.
-        {% if t.games_never %}Ещё {{ t.games_never|ru }} {{ t.games_never|plural('игра','игры','игр') }} не {{ t.games_never|plural('открывалась','открывались','открывались') }} ни разу.{% endif %}
+        Столбики — сколько игр попало в каждый диапазон по наигранному времени.
+        {% if t.dropped %}<b>{{ t.dropped|ru }} {{ t.dropped|plural('игра','игры','игр') }}</b>
+        {{ t.dropped|plural('не дожила','не дожили','не дожили') }} даже до часа.{% endif %}
+        Даты последнего запуска Steam больше не отдаёт, поэтому считаем по часам.
       </p>
     </div>
   </div>
@@ -214,13 +218,13 @@
         <div class="muted" style="font-size:12.5px">{{ m.worst.price|ru }} ₽ · {{ m.worst.hours }} {{ m.worst.hours|round|int|plural('час','часа','часов') }}</div>
       </div>
       {% endif %}
-      {% if t.abandoned %}
+      {% if t.wasted %}
       <div class="blueprint">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div class="label" style="color:var(--color-accent-300);margin-bottom:8px">Самая заброшенная</div>
-        <div style="font-size:16px;font-weight:500">{{ t.abandoned.name }}</div>
-        <div class="h-num">{% if t.abandoned.years %}{{ t.abandoned.years }} г. {% endif %}{{ t.abandoned.months }} мес.</div>
-        <div class="muted" style="font-size:12.5px">последний запуск {{ t.abandoned.date }}, {{ t.abandoned.hours }} {{ t.abandoned.hours|round|int|plural('час','часа','часов') }}</div>
+        <div class="label" style="color:var(--color-accent-300);margin-bottom:8px">Деньги на ветер</div>
+        <div style="font-size:16px;font-weight:500">{{ t.wasted.name }}</div>
+        <div class="h-num">{{ t.wasted.price|ru }} ₽</div>
+        <div class="muted" style="font-size:12.5px">запущена на {{ t.wasted.minutes }} {{ t.wasted.minutes|plural('минуту','минуты','минут') }} и брошена</div>
       </div>
       {% endif %}
     </div>

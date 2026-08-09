@@ -1,5 +1,4 @@
 import time
-from collections import Counter
 from datetime import datetime
 
 from .db import HOME_CC, MIN_MINUTES_FOR_RATE, REGIONS
@@ -41,37 +40,24 @@ def build(summary, games, prices_by_cc, fx):
     top_min = sum(g["playtime_forever"] for g in ranked[:5])
     rest_min = total_min - top_min
 
-    # ── когда последний раз заходил в каждую игру ────────────
-    # Разбивки playtime по годам в Steam API нет и взять её негде,
-    # а rtime_last_played есть. Показываем распределение библиотеки
-    # по году последнего запуска.
-    years = Counter()
-    for g in games:
-        ts = g.get("rtime_last_played") or 0
-        if ts > 0:
-            years[datetime.utcfromtimestamp(ts).year] += 1
-    if years:
-        lo, hi = min(years), max(years)
-        last_played = [{"year": y, "count": years.get(y, 0)} for y in range(lo, hi + 1)]
-        peak = max(last_played, key=lambda x: x["count"])
-    else:
-        last_played, peak = [], None
-
-    # ── самая заброшенная ────────────────────────────────────
-    abandoned = None
-    cands = [g for g in played if (g.get("rtime_last_played") or 0) > 0]
-    if cands:
-        g = min(cands, key=lambda x: x["rtime_last_played"])
-        gap = now - g["rtime_last_played"]
-        abandoned = {
-            "name": g.get("name"),
-            "hours": round(g["playtime_forever"] / 60.0, 1),
-            "date": datetime.utcfromtimestamp(g["rtime_last_played"]).strftime("%d.%m.%Y"),
-            "years": gap // 31557600,
-            "months": (gap % 31557600) // 2629800,
-        }
+    # ── распределение библиотеки по наигранному ──────────────
+    # Изначально тут был год последнего запуска, но Valve перестала отдавать
+    # rtime_last_played: поле пустое и с include_extended_appinfo, и через
+    # input_json, и на чужих аккаунтах с тысячей игр. Считаем из playtime.
+    RANGES = [("0 ч", 0, 1), ("до 1 ч", 1, 60), ("1–10 ч", 60, 600),
+              ("10–50 ч", 600, 3000), ("50–100 ч", 3000, 6000), ("100 ч+", 6000, None)]
+    buckets = []
+    for label, lo, hi in RANGES:
+        n = sum(1 for g in games
+                if lo <= g.get("playtime_forever", 0) and (hi is None or g.get("playtime_forever", 0) < hi))
+        buckets.append({"label": label, "count": n})
+    peak = max(buckets, key=lambda x: x["count"]) if any(b["count"] for b in buckets) else None
+    # Запущенные и брошенные в первый же час. Ноль часов сюда не входит -
+    # для них есть отдельный блок "кладбище".
+    dropped = buckets[1]["count"]
 
     # ── деньги по домашнему региону ──────────────────────────
+    wasted = None          # самая дорогая из тех, что не дожили до часа
     library_value = dead_value = 0.0
     priced_minutes = 0
     # Знаменатель покрытия: только те игры, у которых цена в принципе бывает.
@@ -105,7 +91,12 @@ def build(summary, games, prices_by_cc, fx):
 
         if minutes == 0:
             dead_value += price
-        elif minutes >= MIN_MINUTES_FOR_RATE:
+        elif minutes < 60:
+            if not wasted or price > wasted["price"]:
+                wasted = {"name": g.get("name"), "price": round(price),
+                          "minutes": minutes, "appid": appid}
+
+        if minutes >= MIN_MINUTES_FOR_RATE:
             per_hour = price / (minutes / 60.0)
             rates.append((per_hour, g, price))
             rows.append({
@@ -202,9 +193,10 @@ def build(summary, games, prices_by_cc, fx):
             "rest_count": max(0, len(games) - 5),
             "rest_hours": round(rest_min / 60.0),
             "rest_share": round(rest_min / total_min * 100, 1) if total_min else 0,
-            "last_played": last_played,
+            "buckets": buckets,
             "peak": peak,
-            "abandoned": abandoned,
+            "dropped": dropped,
+            "wasted": wasted,
         },
         "money": {
             "currency": "RUB",
