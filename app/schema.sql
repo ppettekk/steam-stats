@@ -49,3 +49,37 @@ CREATE TABLE IF NOT EXISTS meta (
   hours    INTEGER NOT NULL DEFAULT 0
 );
 INSERT OR IGNORE INTO meta(id, profiles, hours) VALUES (1, 0, 0);
+
+-- Обезличенные срезы для агрегированной статистики.
+-- steamid хранится хэшем: для подсчётов достаточно, а связать строку
+-- с конкретным человеком по ней уже нельзя.
+CREATE TABLE IF NOT EXISTS snapshots (
+  sid_hash      TEXT PRIMARY KEY,
+  created_at    INTEGER NOT NULL,
+  account_days  INTEGER,
+  account_year  INTEGER,
+  total_hours   INTEGER,
+  games_owned   INTEGER,
+  games_played  INTEGER,
+  games_never   INTEGER,
+  library_value INTEGER,
+  dead_value    INTEGER,
+  per_hour      REAL,
+  coverage      INTEGER,
+  top5_share    REAL,
+  blocked_count INTEGER,
+  blocked_value INTEGER,
+  blocked_hours INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_snap_created ON snapshots(created_at);
+
+-- Сводка по играм: у скольких есть, сколько запускали, сколько часов суммарно.
+CREATE TABLE IF NOT EXISTS game_stats (
+  appid         INTEGER PRIMARY KEY,
+  name          TEXT,
+  owners        INTEGER NOT NULL DEFAULT 0,
+  played        INTEGER NOT NULL DEFAULT 0,
+  never         INTEGER NOT NULL DEFAULT 0,
+  total_minutes INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_game_owners ON game_stats(owners DESC);

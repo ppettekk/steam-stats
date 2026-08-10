@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from . import calc, db, render, steam
+from . import calc, db, render, stats, steam
 
 BASE = Path(__file__).resolve().parent.parent
 app = FastAPI(title="Steam Life", docs_url=None, redoc_url=None)
@@ -90,10 +90,17 @@ async def _compute(q: str, refresh: bool = False, cc: str = db.HOME_CC):
             "INSERT OR REPLACE INTO results(steamid64, cc, payload, created_at) VALUES (?,?,?,?)",
             (steamid64, cc, json.dumps(payload, ensure_ascii=False), int(time.time())),
         )
-        conn.execute(
-            "UPDATE meta SET profiles = profiles + 1, hours = hours + ? WHERE id = 1",
-            (payload["time"]["total_hours"],),
-        )
+        # Счётчик и обезличенный срез - только по домашнему региону,
+        # иначе один человек, потыкавший переключатель, посчитается шесть раз.
+        if cc == db.HOME_CC:
+            try:
+                if stats.record(conn, payload, games):
+                    conn.execute(
+                        "UPDATE meta SET profiles = profiles + 1, hours = hours + ? WHERE id = 1",
+                        (payload["time"]["total_hours"],),
+                    )
+            except Exception:
+                logging.exception("stats.record failed")
 
         # Всё, чего нет в кэше цен, уходит в очередь с высоким приоритетом:
         # это игры живых пользователей, они важнее хвоста из SteamSpy.
@@ -198,6 +205,15 @@ async def og(steamid64: str):
         path = render.render_to_file(d, steamid64)
     return FileResponse(path, media_type="image/jpeg",
                         headers={"Cache-Control": "public, max-age=43200"})
+
+
+@app.get("/api/aggregate")
+def aggregate():
+    conn = db.connect()
+    try:
+        return stats.aggregate(conn)
+    finally:
+        conn.close()
 
 
 @app.get("/api/health")
